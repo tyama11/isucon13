@@ -35,7 +35,7 @@ var (
 	dbConn                   *sqlx.DB
 	secret                   = []byte("isucon13_session_cookiestore_defaultsecret")
 	dbHosts                  = []string{"192.168.0.12", "192.168.0.13"}
-	var mc *memcache.Client
+	mc                       *memcache.Client
 )
 
 func init() {
