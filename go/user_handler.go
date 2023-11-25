@@ -117,7 +117,7 @@ func postIconHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to decode the request body as json")
 	}
 	if err != nil {
-		eturn echo.NewHTTPError(http.StatusInternalServerError, "failed to begin transaction: ")
+		eturn echo.NewHTTPError(http.StatusInternalServerError, "failed to begin transaction: "+err.Error())
 	}
 	tx, err := dbConn.BeginTxx(ctx, nil)
 	if err != nil {
