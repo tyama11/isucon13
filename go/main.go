@@ -112,8 +112,8 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 
 func initializeHandler(c echo.Context) error {
 	mc = memcache.New("localhost:11211")
-	_, _ = http.Post(fmt.Sprintf("http://192.168.0.12:8080/initializeOne", host), "application/json", nil)
-	_, _ = http.Post(fmt.Sprintf("http://192.168.0.13:8080/initializeOne", host), "application/json", nil)
+	_, _ = http.Post(fmt.Sprintf("http://192.168.0.12:8080/initializeOne"), "application/json", nil)
+	_, _ = http.Post(fmt.Sprintf("http://192.168.0.13:8080/initializeOne"), "application/json", nil)
 	time.Sleep(40 * time.Second)
 	c.Request().Header.Add("Content-Type", "application/json;charset=utf-8")
 	return c.JSON(http.StatusOK, InitializeResponse{
