@@ -98,7 +98,6 @@ func getIconHandler(c echo.Context) error {
 	}
 }
 
-
 func postIconHandler(c echo.Context) error {
 	ctx := c.Request().Context()
 
@@ -115,9 +114,6 @@ func postIconHandler(c echo.Context) error {
 	var req *PostIconRequest
 	if err := json.NewDecoder(c.Request().Body).Decode(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to decode the request body as json")
-	}
-	if err != nil {
-		eturn echo.NewHTTPError(http.StatusInternalServerError, "failed to begin transaction: "+err.Error())
 	}
 	tx, err := dbConn.BeginTxx(ctx, nil)
 	if err != nil {
@@ -142,7 +138,7 @@ func postIconHandler(c echo.Context) error {
 	if err := tx.Commit(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 	}
-	_,_ := userIconCache.Set(userID, req.Image)
+	_, _ := userIconCache.Set(userID, req.Image)
 
 	return c.JSON(http.StatusCreated, &PostIconResponse{
 		ID: iconID,
