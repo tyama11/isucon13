@@ -86,34 +86,13 @@ type PostIconResponse struct {
 }
 
 func getIconHandler(c echo.Context) error {
-	ctx := c.Request().Context()
 
 	username := c.Param("username")
 
-	tx, err := dbConn.BeginTxx(ctx, nil)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to begin transaction: "+err.Error())
-	}
-	defer tx.Rollback()
-
-	var user UserModel
-	if err := tx.GetContext(ctx, &user, "SELECT * FROM users WHERE name = ?", username); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return echo.NewHTTPError(http.StatusNotFound, "not found user that has the given username")
-		}
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
-	}
-
-	var image []byte
-	if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", user.ID); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return c.File(fallbackImage)
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
-		}
-	}
-
-	return c.Blob(http.StatusOK, "image/jpeg", image)
+	// Create a new concurrent map
+	cachedIcon := mc.Get(username)
+	// Check if the icon is already cached
+	return c.Blob(http.StatusOK, "image/jpeg", cachedIcon.([]byte))
 }
 
 func postIconHandler(c echo.Context) error {
@@ -133,7 +112,6 @@ func postIconHandler(c echo.Context) error {
 	if err := json.NewDecoder(c.Request().Body).Decode(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to decode the request body as json")
 	}
-
 	tx, err := dbConn.BeginTxx(ctx, nil)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to begin transaction: "+err.Error())
@@ -157,6 +135,7 @@ func postIconHandler(c echo.Context) error {
 	if err := tx.Commit(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 	}
+	mc.Set(userID, req.Image, 0)
 
 	return c.JSON(http.StatusCreated, &PostIconResponse{
 		ID: iconID,
