@@ -19,8 +19,11 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
+	cmap "github.com/orcaman/concurrent-map/v2"
 	echolog "github.com/labstack/gommon/log"
 )
+
+
 
 const (
 	listenPort                     = 8080
@@ -31,6 +34,8 @@ var (
 	powerDNSSubdomainAddress string
 	dbConn                   *sqlx.DB
 	secret                   = []byte("isucon13_session_cookiestore_defaultsecret")
+	userIconCache = cmap.New[struct{}]()
+)
 )
 
 func init() {
