@@ -34,7 +34,7 @@ var (
 	dbConn                   *sqlx.DB
 	secret                   = []byte("isucon13_session_cookiestore_defaultsecret")
 	dbHosts                  = []string{"192.168.0.12", "192.168.0.13"}
-	userIconCache            cmap.ConcurrentMap
+	userIconCache            = cmap.New[[250000]byte]()
 )
 
 func init() {
@@ -111,7 +111,6 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 }
 
 func initializeHandler(c echo.Context) error {
-	userIconCache = cmap.New[[250000]byte]()
 	userIconCache.Clear()
 	errCh := make(chan error, len(dbHosts))
 	wg := sync.WaitGroup{}
