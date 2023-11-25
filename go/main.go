@@ -133,7 +133,7 @@ func initializeHandler(c echo.Context) error {
 	}
 
 	if len(errCh) > 0 {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to initialize: "+String(errCh))
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to initialize: ")
 	}
 
 	if out, err := exec.Command("../sql/init.sh").CombinedOutput(); err != nil {
