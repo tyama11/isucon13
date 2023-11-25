@@ -157,7 +157,9 @@ func initializeOne(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to initialize: "+err.Error())
 	}
 
-	return c.JSON(http.StatusOK)
+	return c.JSON(http.StatusOK, InitializeResponse{
+		Language: "golang",
+	})
 }
 
 func main() {
