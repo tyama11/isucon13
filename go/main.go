@@ -11,7 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
-	"sync"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -34,7 +34,6 @@ var (
 	powerDNSSubdomainAddress string
 	dbConn                   *sqlx.DB
 	secret                   = []byte("isucon13_session_cookiestore_defaultsecret")
-	dbHosts                  = []string{"192.168.0.12", "192.168.0.13"}
 	mc                       *memcache.Client
 )
 
@@ -113,38 +112,9 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 
 func initializeHandler(c echo.Context) error {
 	mc = memcache.New("localhost:11211")
-	errCh := make(chan error, len(dbHosts))
-	wg := sync.WaitGroup{}
-	defer close(errCh)
-
-	for _, host := range dbHosts {
-		wg.Add(1)
-		go func(host string) {
-			defer wg.Done()
-
-			resp, err := http.Post(fmt.Sprintf("http://%s:8080/initializeOne", host), "application/json", nil)
-			if err != nil {
-				errCh <- err
-				return
-			}
-
-			if resp.StatusCode != http.StatusOK {
-				errCh <- fmt.Errorf("CODE: %d", resp.StatusCode)
-				return
-			}
-		}(host)
-	}
-
-	if len(errCh) > 0 {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to initialize: ")
-	}
-
-	if out, err := exec.Command("../sql/init.sh").CombinedOutput(); err != nil {
-		c.Logger().Warnf("init.sh failed with err=%s", string(out))
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to initialize: "+err.Error())
-	}
-	wg.Wait()
-
+	_, _ = http.Post(fmt.Sprintf("http://192.168.0.12:8080/initializeOne", host), "application/json", nil)
+	_, _ = http.Post(fmt.Sprintf("http://192.168.0.13:8080/initializeOne", host), "application/json", nil)
+	time.Sleep(40 * time.Second)
 	c.Request().Header.Add("Content-Type", "application/json;charset=utf-8")
 	return c.JSON(http.StatusOK, InitializeResponse{
 		Language: "golang",
