@@ -30,6 +30,7 @@ const (
 var (
 	powerDNSSubdomainAddress string
 	dbConn                   *sqlx.DB
+	dbConn2                  *sqlx.DB
 	secret                   = []byte("isucon13_session_cookiestore_defaultsecret")
 )
 
@@ -44,7 +45,7 @@ type InitializeResponse struct {
 	Language string `json:"language"`
 }
 
-func connectDB(logger echo.Logger) (*sqlx.DB, error) {
+func connectDB(logger echo.Logger) (*sqlx.DB, *sqlx.DB, error) {
 	const (
 		networkTypeEnvKey = "ISUCON13_MYSQL_DIALCONFIG_NET"
 		addrEnvKey        = "ISUCON13_MYSQL_DIALCONFIG_ADDRESS"
@@ -60,7 +61,7 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 	// 環境変数がセットされていなかった場合でも一旦動かせるように、デフォルト値を入れておく
 	// この挙動を変更して、エラーを出すようにしてもいいかもしれない
 	conf.Net = "tcp"
-	conf.Addr = net.JoinHostPort("127.0.0.1", "3306")
+	conf.Addr = net.JoinHostPort("57.180.223.26", "3306")
 	conf.User = "isucon"
 	conf.Passwd = "isucon"
 	conf.DBName = "isupipe"
@@ -102,8 +103,10 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}
+	conf.Addr = net.JoinHostPort("52.68.27.134", "3306")
+	db2, err := sqlx.Open("mysql", conf.FormatDSN())
 
-	return db, nil
+	return db, db2, nil
 }
 
 func initializeHandler(c echo.Context) error {
@@ -185,13 +188,15 @@ func main() {
 	e.HTTPErrorHandler = errorResponseHandler
 
 	// DB接続
-	conn, err := connectDB(e.Logger)
+	conn, conn2, err := connectDB(e.Logger)
 	if err != nil {
 		e.Logger.Errorf("failed to connect db: %v", err)
 		os.Exit(1)
 	}
 	defer conn.Close()
+	defer conn2.Close()
 	dbConn = conn
+	dbConn2 = conn2
 
 	subdomainAddr, ok := os.LookupEnv(powerDNSSubdomainAddressEnvKey)
 	if !ok {
