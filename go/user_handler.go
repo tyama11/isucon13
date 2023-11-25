@@ -90,11 +90,9 @@ func getIconHandler(c echo.Context) error {
 	username := c.Param("username")
 
 	// Create a new concurrent map
-
+	CachedIcon := userIconCache.New(username)
 	// Check if the icon is already cached
-	if cachedIcon, ok := userIconCache.Get(username); ok {
-		return c.Blob(http.StatusOK, "image/jpeg", cachedIcon.([]byte))
-	}
+	return c.Blob(http.StatusOK, "image/jpeg", cachedIcon.([]byte))
 }
 
 func postIconHandler(c echo.Context) error {
