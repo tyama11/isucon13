@@ -21,7 +21,8 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	echolog "github.com/labstack/gommon/log"
-	cmap "github.com/orcaman/concurrent-map/v2"
+
+	"github.com/bradfitz/gomemcache/memcache"
 )
 
 const (
@@ -34,7 +35,7 @@ var (
 	dbConn                   *sqlx.DB
 	secret                   = []byte("isucon13_session_cookiestore_defaultsecret")
 	dbHosts                  = []string{"192.168.0.12", "192.168.0.13"}
-	userIconCache            := cmap.New[[250000]byte]()
+	var mc *memcache.Client
 )
 
 func init() {
@@ -111,7 +112,7 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 }
 
 func initializeHandler(c echo.Context) error {
-	userIconCache.Clear()
+	mc = memcache.New("localhost:11211")
 	errCh := make(chan error, len(dbHosts))
 	wg := sync.WaitGroup{}
 	defer close(errCh)

@@ -90,7 +90,7 @@ func getIconHandler(c echo.Context) error {
 	username := c.Param("username")
 
 	// Create a new concurrent map
-	cachedIcon := userIconCache.New(username)
+	cachedIcon := mc.Get(username)
 	// Check if the icon is already cached
 	return c.Blob(http.StatusOK, "image/jpeg", cachedIcon.([]byte))
 }
@@ -135,7 +135,7 @@ func postIconHandler(c echo.Context) error {
 	if err := tx.Commit(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 	}
-	_, _ = userIconCache.Set(userID, req.Image)
+	mc.Set(userID, req.Image, 0)
 
 	return c.JSON(http.StatusCreated, &PostIconResponse{
 		ID: iconID,
