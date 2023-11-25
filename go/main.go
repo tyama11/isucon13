@@ -111,7 +111,7 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 }
 
 func initializeHandler(c echo.Context) error {
-	userIconCache = cmap.New[[]byte]()
+	userIconCache = cmap.New[[250000]byte]()
 	userIconCache.Clear()
 	errCh := make(chan error, len(dbHosts))
 	wg := sync.WaitGroup{}
