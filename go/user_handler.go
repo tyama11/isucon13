@@ -86,14 +86,51 @@ type PostIconResponse struct {
 	ID int64 `json:"id"`
 }
 
-func getIconHandler(c echo.Context) error {
+func postIconHandler(c echo.Context) error {
+	ctx := c.Request().Context()
 
-	username := c.Param("username")
+	if err := verifyUserSession(c); err != nil {
+		// echo.NewHTTPErrorが返っているのでそのまま出力
+		return err
+	}
 
-	// Create a new concurrent map
-	cachedIcon, _ := mc.Get(username)
-	// Check if the icon is already cached
-	return c.Blob(http.StatusOK, "image/jpeg", cachedIcon.([]byte))
+	// error already checked
+	sess, _ := session.Get(defaultSessionIDKey, c)
+	// existence already checked
+	userID := sess.Values[defaultUserIDKey].(int64)
+
+	var req *PostIconRequest
+	if err := json.NewDecoder(c.Request().Body).Decode(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "failed to decode the request body as json")
+	}
+
+	tx, err := dbConn.BeginTxx(ctx, nil)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to begin transaction: "+err.Error())
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.ExecContext(ctx, "DELETE FROM icons WHERE user_id = ?", userID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete old user icon: "+err.Error())
+	}
+
+	rs, err := tx.ExecContext(ctx, "INSERT INTO icons (user_id, image) VALUES (?, ?)", userID, req.Image)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new user icon: "+err.Error())
+	}
+
+	iconID, err := rs.LastInsertId()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get last inserted icon id: "+err.Error())
+	}
+
+	if err := tx.Commit(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
+	}
+
+	return c.JSON(http.StatusCreated, &PostIconResponse{
+		ID: iconID,
+	})
 }
 
 func postIconHandler(c echo.Context) error {
@@ -136,7 +173,7 @@ func postIconHandler(c echo.Context) error {
 	if err := tx.Commit(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 	}
-	mc.Set(&memcache.Item{Key: userID, Value: req.Image})
+	mc.Set(&memcache.Item{Key: username, Value: req.Image})
 
 	return c.JSON(http.StatusCreated, &PostIconResponse{
 		ID: iconID,

@@ -122,7 +122,7 @@ func initializeHandler(c echo.Context) error {
 		go func(host string) {
 			defer wg.Done()
 
-			resp, err := http.Post(fmt.Sprintf("http://%s:8080/initialize", host), "application/json", nil)
+			resp, err := http.Post(fmt.Sprintf("http://%s:8080/initializeOne", host), "application/json", nil)
 			if err != nil {
 				errCh <- err
 				return
@@ -151,6 +151,15 @@ func initializeHandler(c echo.Context) error {
 	})
 }
 
+func initializeOne(c echo.Context) error {
+	if out, err := exec.Command("../sql/init.sh").CombinedOutput(); err != nil {
+		c.Logger().Warnf("init.sh failed with err=%s", string(out))
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to initialize: "+err.Error())
+	}
+
+	return c.JSON(http.StatusOK)
+}
+
 func main() {
 	e := echo.New()
 	e.Debug = true
@@ -163,6 +172,7 @@ func main() {
 
 	// 初期化
 	e.POST("/api/initialize", initializeHandler)
+	e.POST("/initializeOne", initializeOne)
 
 	// top
 	e.GET("/api/tag", getTagHandler)
