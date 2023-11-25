@@ -21,7 +21,6 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	echolog "github.com/labstack/gommon/log"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -133,7 +132,7 @@ func initializeHandler(c echo.Context) error {
 	}
 
 	if len(errCh) > 0 {
-		return errorResponse(c, http.StatusInternalServerError, <-errCh)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to initialize: "+err.Error())
 	}
 
 	if out, err := exec.Command("../sql/init.sh").CombinedOutput(); err != nil {
