@@ -34,7 +34,7 @@ var (
 	dbConn                   *sqlx.DB
 	secret                   = []byte("isucon13_session_cookiestore_defaultsecret")
 	dbHosts                  = []string{"192.168.0.12", "192.168.0.13"}
-	userIconCache
+	userIconCache            cmap.ConcurrentMap
 )
 
 func init() {
