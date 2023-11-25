@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
@@ -90,7 +91,7 @@ func getIconHandler(c echo.Context) error {
 	username := c.Param("username")
 
 	// Create a new concurrent map
-	cachedIcon := mc.Get(username)
+	cachedIcon, _ := mc.Get(username)
 	// Check if the icon is already cached
 	return c.Blob(http.StatusOK, "image/jpeg", cachedIcon.([]byte))
 }
@@ -135,7 +136,7 @@ func postIconHandler(c echo.Context) error {
 	if err := tx.Commit(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 	}
-	mc.Set(userID, req.Image, 0)
+	mc.Set(&memcache.Item{Key: userID, Value: req.Image})
 
 	return c.JSON(http.StatusCreated, &PostIconResponse{
 		ID: iconID,
