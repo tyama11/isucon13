@@ -21,6 +21,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	echolog "github.com/labstack/gommon/log"
+	cmap "github.com/orcaman/concurrent-map"
 )
 
 const (
