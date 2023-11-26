@@ -165,11 +165,19 @@ func postIconHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 	}
 
+	// Update memcached data
+	item := &memcache.Item{
+		Key:   fmt.Sprintf("user_icon_%d", userID),
+		Value: req.Image,
+	}
+	if err := mc.Set(item); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to set user icon to memcached: "+err.Error())
+	}
+
 	return c.JSON(http.StatusCreated, &PostIconResponse{
 		ID: iconID,
 	})
 }
-
 func getMeHandler(c echo.Context) error {
 	ctx := c.Request().Context()
 
