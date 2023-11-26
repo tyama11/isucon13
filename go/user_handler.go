@@ -113,7 +113,7 @@ func getIconHandler(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
 		}
 	}
-	item = &memcache.Item{
+	item := &memcache.Item{
 		Key:   username,
 		Value: image,
 	}
