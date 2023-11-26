@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
-	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -64,7 +63,7 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 	// 環境変数がセットされていなかった場合でも一旦動かせるように、デフォルト値を入れておく
 	// この挙動を変更して、エラーを出すようにしてもいいかもしれない
 	conf.Net = "tcp"
-	conf.Addr = net.JoinHostPort("57.180.223.26", "3306")
+	conf.Addr = net.JoinHostPort("192.168.0.12", "3306")
 	conf.User = "isucon"
 	conf.Passwd = "isucon"
 	conf.DBName = "isupipe"
@@ -112,21 +111,11 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 
 func initializeHandler(c echo.Context) error {
 	mc = memcache.New("localhost:11211")
-	_, _ = http.Post(fmt.Sprintf("http://192.168.0.12:8080/initializeOne"), "application/json", nil)
-	_, _ = http.Post(fmt.Sprintf("http://192.168.0.13:8080/initializeOne"), "application/json", nil)
-	time.Sleep(40 * time.Second)
-	c.Request().Header.Add("Content-Type", "application/json;charset=utf-8")
-	return c.JSON(http.StatusOK, InitializeResponse{
-		Language: "golang",
-	})
-}
-
-func initializeOne(c echo.Context) error {
 	if out, err := exec.Command("../sql/init.sh").CombinedOutput(); err != nil {
 		c.Logger().Warnf("init.sh failed with err=%s", string(out))
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to initialize: "+err.Error())
 	}
-
+	c.Request().Header.Add("Content-Type", "application/json;charset=utf-8")
 	return c.JSON(http.StatusOK, InitializeResponse{
 		Language: "golang",
 	})
@@ -144,7 +133,6 @@ func main() {
 
 	// 初期化
 	e.POST("/api/initialize", initializeHandler)
-	e.POST("/initializeOne", initializeOne)
 
 	// top
 	e.GET("/api/tag", getTagHandler)
