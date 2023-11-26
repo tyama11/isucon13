@@ -7,8 +7,8 @@ if test -f /home/isucon/env.sh; then
 	. /home/isucon/env.sh
 fi
 
-ssh 192.168.0.12 ~/webapp/sql/init.sh 
-ssh 192.168.0.13 ~/webapp/sql/init.sh
+ssh 192.168.0.12 ~/webapp/sql/init.sh &
+ssh 192.168.0.13 ~/webapp/sql/init.sh &
 
 ISUCON_DB_HOST=${ISUCON13_MYSQL_DIALCONFIG_ADDRESS:-192.168.0.12}
 ISUCON_DB_PORT=${ISUCON13_MYSQL_DIALCONFIG_PORT:-3306}

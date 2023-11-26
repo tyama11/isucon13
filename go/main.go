@@ -25,8 +25,7 @@ import (
 )
 
 const (
-	listenPort                     = 8080
-	powerDNSSubdomainAddressEnvKey = "ISUCON13_POWERDNS_SUBDOMAIN_ADDRESS"
+	listenPort = 8080
 )
 
 var (
@@ -196,12 +195,7 @@ func main() {
 	defer conn.Close()
 	dbConn = conn
 
-	subdomainAddr, ok := os.LookupEnv(powerDNSSubdomainAddressEnvKey)
-	if !ok {
-		e.Logger.Errorf("environ %s must be provided", powerDNSSubdomainAddressEnvKey)
-		os.Exit(1)
-	}
-	powerDNSSubdomainAddress = subdomainAddr
+	powerDNSSubdomainAddress = "192.168.0.13"
 
 	// HTTPサーバ起動
 	listenAddr := net.JoinHostPort("", strconv.Itoa(listenPort))
